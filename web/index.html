@@ -1,34 +1,196 @@
 <!doctype html>
 <html lang="en-CA">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="{{DESCRIPTION}}">
-  <title>{{TITLE}} · CoolCode</title>
-  <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.mjs"></script>
-  {{VISIT_COUNTER}}
-</head>
-<body data-tool-id="{{TOOL_ID}}">
-  <a class="skip" href="#main">Skip to content</a>
-  <header><a href="https://coolcode.ca/">← CoolCode.ca</a><a href="{{SOURCE_URL}}">Source &amp; instructions ↗</a></header>
-  <main id="main">
-    <p class="eyebrow">Browser tool starter</p>
-    <h1>{{TITLE}}</h1>
-    <p class="intro">{{DESCRIPTION}}</p>
-    <section aria-labelledby="example-title">
-      <h2 id="example-title">Clean a list</h2>
-      <p>Trim spaces, skip blank lines and remove exact duplicates. Capitalization stays distinct.</p>
-      <div class="panels">
-        <div><label for="input">Your lines</label><textarea id="input" rows="10" maxlength="100000" spellcheck="false" placeholder="Paste one item per line"></textarea></div>
-        <div><label for="output">Cleaned lines</label><textarea id="output" rows="10" readonly spellcheck="false"></textarea></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="{{DESCRIPTION}}" />
+    <title>Inspect Torrent Files and Magnet Links · CoolCode</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.mjs"></script>
+    {{VISIT_COUNTER}}
+  </head>
+  <body data-tool-id="{{TOOL_ID}}">
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <a class="brand" href="https://coolcode.ca/"
+        >CoolCode<span> / files &amp; privacy</span></a
+      ><a href="{{SOURCE_URL}}">Source &amp; guide</a>
+    </header>
+    <main id="main">
+      <section class="hero">
+        <p class="eyebrow">Know what the metadata says</p>
+        <h1>{{TITLE}}</h1>
+        <p class="intro">
+          Look inside a torrent.<br /><span>Without joining the swarm.</span>
+        </p>
+        <p class="description">{{DESCRIPTION}}</p>
+        <div class="badges">
+          <span>Local processing</span><span>No tracker connections</span
+          ><span>v1 · v2 · hybrid</span>
+        </div>
+      </section>
+      <div class="workspace">
+        <section class="panel input-panel" aria-labelledby="input-title">
+          <h2 id="input-title">Choose what to inspect</h2>
+          <label class="dropzone" id="dropzone" for="file"
+            ><span class="file-symbol" aria-hidden="true">＋</span
+            ><strong>Drop a .torrent file</strong
+            ><span>or select a file from your device</span
+            ><small id="file-limit">Up to 16 MiB of metadata</small
+            ><input
+              id="file"
+              type="file"
+              accept=".torrent,application/x-bittorrent"
+          /></label>
+          <div class="divider"><span>or paste a magnet</span></div>
+          <form id="magnet-form">
+            <label for="magnet">Magnet link</label
+            ><textarea
+              id="magnet"
+              rows="4"
+              maxlength="100000"
+              spellcheck="false"
+              placeholder="magnet:?xt=urn:btih:…"
+            ></textarea
+            ><button class="primary" type="submit" id="inspect">
+              Inspect magnet
+            </button>
+          </form>
+          <div class="actions">
+            <button type="button" class="quiet" id="demo">
+              Try a local example</button
+            ><button type="button" class="quiet" id="clear">Clear</button>
+          </div>
+          <p id="status" role="status" aria-live="polite">
+            Your file or link stays in this tab.
+          </p>
+          <noscript
+            >This tool needs JavaScript to inspect files locally.</noscript
+          >
+        </section>
+        <section class="panel result-panel" aria-labelledby="result-title">
+          <div class="section-top">
+            <h2 id="result-title">Inspection</h2>
+            <button type="button" id="download" class="quiet" hidden>
+              Save JSON report
+            </button>
+          </div>
+          <div id="empty" class="empty">
+            <span class="empty-mark" aria-hidden="true">⌕</span>
+            <h3>See the contents before you decide.</h3>
+            <p>
+              File names, sizes, tracker hosts and exact infohashes appear here.
+              We never download the files described by the torrent.
+            </p>
+          </div>
+          <div id="results" hidden>
+            <div class="result-heading">
+              <p class="eyebrow" id="format"></p>
+              <h3 id="name"></h3>
+            </div>
+            <div class="stats">
+              <div><span>Listed payload</span><strong id="size"></strong></div>
+              <div><span>Files</span><strong id="count"></strong></div>
+              <div>
+                <span>Files to review</span><strong id="flagged"></strong>
+              </div>
+            </div>
+            <p id="scope" class="muted"></p>
+            <div id="warnings" class="warnings" hidden>
+              <h4>Review notes</h4>
+              <ul id="warning-list"></ul>
+            </div>
+            <details open>
+              <summary>Identity &amp; metadata</summary>
+              <dl id="metadata"></dl>
+            </details>
+            <details open>
+              <summary>
+                Trackers &amp; web seeds <span id="tracker-count"></span>
+              </summary>
+              <p class="muted">
+                Addresses are shown as text. They have not been contacted.
+                Private tracker URLs can contain passkeys.
+              </p>
+              <ul id="trackers" class="address-list"></ul>
+            </details>
+            <section id="files-section">
+              <div class="section-top">
+                <h4>File list</h4>
+                <label class="check"
+                  ><input id="flags-only" type="checkbox" /> Only flagged
+                  files</label
+                >
+              </div>
+              <label for="filter">Find a filename</label
+              ><input
+                id="filter"
+                type="search"
+                placeholder="Search paths or extensions"
+              />
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Path</th>
+                      <th>Size</th>
+                      <th>Review</th>
+                    </tr>
+                  </thead>
+                  <tbody id="file-list"></tbody>
+                </table>
+              </div>
+              <div class="pagination">
+                <button type="button" id="previous">Previous</button
+                ><span id="pagination"></span
+                ><button type="button" id="next">Next</button>
+              </div>
+            </section>
+          </div>
+        </section>
       </div>
-      <div class="actions"><button id="sample" type="button">Load example</button><button id="clear" type="button">Clear</button><button id="copy" type="button" hidden>Copy result</button></div>
-      <p id="status" role="status" aria-live="polite">Paste a list to begin.</p>
-      <noscript><p>This tool needs JavaScript to process your text. The source is available above.</p></noscript>
-    </section>
-    <aside aria-label="Privacy"><strong>Stays on your device.</strong> The browser processes your text in this tab. Reloading clears it.</aside>
-  </main>
-  <footer>Part of <a href="https://coolcode.ca/">the CoolCode collection</a>. {{ISSUE_LINK}}</footer>
-</body>
+      <section class="explain">
+        <article>
+          <h2>Metadata, not a safety verdict</h2>
+          <p>
+            A filename ending in <code>.exe</code> or a suspicious path deserves
+            attention. A clean-looking file list cannot establish that the
+            content is safe or that it matches its name. Hashes identify the
+            torrent metadata; they do not certify the publisher.
+          </p>
+        </article>
+        <article>
+          <h2>Why a magnet has fewer details</h2>
+          <p>
+            Most magnet links carry an infohash, a display name and tracker
+            hints. The actual file list requires separate metadata. This
+            inspector does not contact peers, resolve magnets, or download
+            content.
+          </p>
+        </article>
+        <article>
+          <h2>Privacy by design</h2>
+          <p>
+            Inspection runs in a local worker. Files, links and reports are not
+            saved unless you download a report. Clear removes the current input.
+            The shared CoolCode counter records aggregate page opens, never your
+            inspection data.
+          </p>
+        </article>
+      </section>
+    </main>
+    <footer>
+      <span>Built for a closer look.</span
+      ><span
+        ><a href="https://www.bittorrent.org/beps/bep_0003.html"
+          >BitTorrent v1</a
+        >
+        ·
+        <a href="https://www.bittorrent.org/beps/bep_0052.html"
+          >BitTorrent v2</a
+        >
+        · {{ISSUE_LINK}}</span
+      >
+    </footer>
+  </body>
 </html>

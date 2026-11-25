@@ -1,16 +1,23 @@
 {
-  "id": "coolcode-tool-template",
-  "title": "CoolCode Tool Starter",
-  "description": "A browser-only example that trims lines and removes exact duplicates.",
+  "id": "torrentlens",
+  "title": "Torrent Lens",
+  "description": "Inspect torrent files and magnet links locally: see files, sizes, hashes, trackers and filename warnings without downloading the content.",
   "category": "security",
-  "tags": ["text", "lines", "duplicates"],
+  "tags": [
+    "torrent",
+    "magnet",
+    "privacy",
+    "files",
+    "hash",
+    "BitTorrent"
+  ],
   "icon": "scan-search",
-  "url": "/coolcode-tool-template/",
-  "source": "https://github.com/jsdyer/coolcode-tool-template",
+  "url": "/torrentlens/",
+  "source": "https://github.com/jsdyer/torrentlens",
   "hosting": "project",
   "access": "browser",
   "data_info": {
     "mode": "local",
-    "detail": "The browser reads the text you paste and compares its lines."
+    "detail": "Reads torrent metadata or magnet links locally. Does not contact trackers, join peers or download the described files."
   }
 }
